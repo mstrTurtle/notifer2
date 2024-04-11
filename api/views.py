@@ -35,5 +35,5 @@ def cancel_message(id:int):
 def message_list(mm: m.Message):
     # TODO: id应当根据最大的生成
     m.Message.db[mm.id] = mm
-    emit('message updated in list')
-    # TODO: 通知消息模块进行通信
+    import message_loop.interface as i
+    i.submitMessage(m)
