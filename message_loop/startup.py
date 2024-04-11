@@ -70,7 +70,6 @@ def run_loop():
     loop.add_signal_handler(signal.SIGTERM, on_sigint)
 
     recover()
-
     loop.run_until_complete(mainCoro())
 
 def run_loop_with_new_thread()->Thread:
@@ -82,6 +81,8 @@ async def wait_until(dt):
     '''这是个辅助用的awaitable'''
     # sleep until the specified datetime
     now = datetime.datetime.now()
+    if dt <= now:
+        return
     await asyncio.sleep((dt - now).total_seconds())
 
 fCancel = asyncio.Future()
@@ -89,9 +90,13 @@ fCancel = asyncio.Future()
 async def waitAndDispatchOneMessage(m:mo.Message):
     '''代表一个消息发送的长时任务，并且支持cancel'''
     async def task():
-        await wait_until(m.send_time)
-        sendMessage(m)
-    await asyncio.wait([fCancel,task],return_when=asyncio.FIRST_COMPLETED)
+        try:
+            await wait_until(m.send_time)
+            sendMessage(m)
+        except asyncio.CancelledError:
+            print(f'Message {m.id}\'s sending is gracefully closed')
+        await asyncio.wait([fCancel,task],return_when=asyncio.FIRST_COMPLETED)
+   
 
 async def mainCoro():
     '''负责不断取新消息的长时任务'''
