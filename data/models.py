@@ -28,15 +28,27 @@ class Message:
     def __lt__(self, other):
         return self.send_time < other.send_time
     
-    
+def saveMessage(m:Message):
+    Message.db[m.id] = m
 
 def getAllMessage():
     return list(Message.db.values())
 
+cntDb=shelve.open('cnt.db')
+if 'Message' not in cntDb:
+    cntDb['Message'] = 0
+if 'Event' not in cntDb:
+    cntDb['Event'] = 0
+
+def getCnt(key:str):
+    v = cntDb[key]
+    cntDb[key] = v+1
+    return v
 
 
 @dataclass
 class Event:
+    id: int
     message_id: int
     detail :str
     event_time :datetime
@@ -48,3 +60,10 @@ class Event:
 
 def getAllEvent():
     return list(Event.db.values())
+
+def saveEvent(e:Event):
+    Message.db[e.id] = e
+
+def newEvent(m:Message, detail:str)->Event:
+    return Event(id=getCnt('Event'),message_id=m.id,detail=detail,event_time=datetime.now())
+    raise NotImplementedError()
