@@ -1,59 +1,39 @@
-from django.shortcuts import render
+from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 
-# Create your views here.
-
-from .models import Message, Event
-from django.shortcuts import redirect
+app = FastAPI()
 
 import logging
-
 logger = logging.getLogger(__name__)
 
-def messages_list(request):
-    messages = Message.objects.all()
-    return render(request, 'notification_app/messages_list.html', {'messages': messages})
+# https://learn.microsoft.com/en-us/azure/architecture/best-practices/api-design
+# 按照这玩意儿的表格设计。/xs(四个操作), /xs/{id}(没POST之外三个操作), /xs/{id}/ys（四个操作）都定义上去。
+# 像个矩阵一样。有些东西用不到暂时先不定义了。
 
 
-def events_list(request):
-    events = Event.objects.all()
-    return render(request, 'notification_app/events_list.html', {'events': events})
+import data.models as m
 
-def cancel_message(request):
-    pk = request.GET.get('pk')
-    Message.objects.filter(pk=pk).update(status='canceled')
+@app.get("/messages")
+def messages_list():
+    ms = m.getAllMessage()
+    return  {'messages': ms}
 
-    return redirect('message_list')
 
-from django.core.paginator import Paginator
-from django.shortcuts import render
-from .forms import MessageForm
-from .models import Message
-from .startup import addOneMessage,submitMessageAsync
+@app.get("/events")
+def events_list():
+    es = m.getAllEvent()
+    return  {'events': es}
 
-def message_list(request):
-    # 获取所有的Message记录
-    messages = Message.objects.all().order_by('-send_time')
+@app.delete("/messages/{id}")
+def cancel_message(id:int):
+    val = m.Message.db[id]
+    val.status = 'canceled'
+    m.Message.db[id] = val
+    return RedirectResponse(url='/redirected')
 
-    # 分页处理
-    paginator = Paginator(messages, 10)  # 每页显示10条记录
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    # 处理表单提交
-    if request.method == 'POST':
-        form = MessageForm(request.POST)
-        if form.is_valid():
-            m = form.save()
-            # 重定向到当前页面，以显示新提交的记录
-            submitMessageAsync(m)
-            return redirect(request.path_info)
-    else:
-        from django.utils import timezone
-        form = MessageForm(initial={'send_time': timezone.now()})
-
-    context = {
-        'form': form,
-        'page_obj': page_obj,
-    }
-    return render(request, 'notification_app/message_list.html', context)
-
+@app.post("/messages")
+def message_list(mm: m.Message):
+    # TODO: id应当根据最大的生成
+    m.Message.db[mm.id] = mm
+    emit('message updated in list')
+    # TODO: 通知消息模块进行通信
