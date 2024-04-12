@@ -21,6 +21,7 @@ cancel = None
 loop = asyncio.new_event_loop()
 
 def _recover():
+
     '''Recover from unexpected shutdown'''
     import data.models as mo
     db = mo.Message.db
