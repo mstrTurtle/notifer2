@@ -26,6 +26,7 @@ def events_list():
 
 @app.delete("/messages/{id}")
 def cancel_message(id:int):
+    id = str(id)
     val = m.Message.db[id]
     val.status = 'canceled'
     m.Message.db[id] = val
@@ -34,6 +35,6 @@ def cancel_message(id:int):
 @app.post("/messages")
 def message_list(mm: m.Message):
     # TODO: id应当根据最大的生成
-    m.Message.db[mm.id] = mm
+    m.Message.db[str(mm.id)] = mm
     import message_loop.interface as i
-    i.submitMessage(m)
+    i.submitMessageAsync(m)
