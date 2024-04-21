@@ -2,11 +2,11 @@
 
 ## 这是什么
 
-https://github.com/mstrTurtle/notifer
+之前用asyncio实现了邮件收发逻辑（[this](https://github.com/mstrTurtle/notifer)），但水平不够显得很蹩脚。现在重新写。
 
-这个东西的优化版。可以部署在服务器上实现定时发邮件（或者发通知）的功能。
+可以部署在服务器上实现定时发邮件（或者发通知）的功能，因为用协程实现所以会更加轻量级。
 
-由于没精力实现得太好，使用者需要手动改代码。
+这次用了一些组合的语义来让代码更加succinct。可以作为asyncio的使用示例。毕竟asyncio坑点有点多。
 
 ## 结构
 
@@ -18,4 +18,4 @@ https://github.com/mstrTurtle/notifer
 
 ## 待完成的任务
 
-接下来需要把FastAPI的协程服务器的协程Loop和自己这个模块的协程Loop融合一下。
+接下来需要把FastAPI的协程服务器的协程Loop和自己这个模块的协程Loop融合一下。让两个线程能够完美退出。
